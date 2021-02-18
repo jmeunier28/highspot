@@ -1,0 +1,72 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'application'
+    id 'idea'
+
+    // to configure idea run configs
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '0.10'
+
+    // for build
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+
+    // TODO: add plugin to build a docker container with this
+}
+
+repositories {
+    jcenter()
+}
+
+mainClassName = 'highspot.Main'
+
+dependencies {
+    // logging
+    // TODO: might want to clean some of this up
+    runtime "org.slf4j:jcl-over-slf4j:1.7.30"
+    runtime "org.slf4j:log4j-over-slf4j:1.7.30"
+
+    // This dependency is used internally, and not exposed to consumers on their own compile classpath.
+    implementation 'com.google.guava:guava:29.0-jre'
+    implementation "org.slf4j:log4j-over-slf4j:1.7.30"
+    implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'org.slf4j:slf4j-simple:1.7.30'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
+
+    // Use JUnit test framework
+    testImplementation 'junit:junit:4.13'
+    testImplementation "org.mockito:mockito-core:2.0.7-beta"
+}
+
+
+// IDEA run configs for easy setup in debugger
+def envVars = [
+        'TEST': 'test'
+]
+
+idea.project.settings.runConfigurations {
+    "Highspot"(org.jetbrains.gradle.ext.Application) {
+        mainClass = 'highspot.Main'
+        moduleRef project(":"), sourceSets.main
+        jvmArgs '-Dhost.fqdn=dev.local -Xmx1G'
+        programParameters 'src/test/resources/changes.json src/test/resources/mixtape.json' // sample json
+        envs = envVars
+    }
+}
+
+// plugin for building shadow jar to run app
+shadowJar {
+    baseName = 'coding-challenge-shadow'
+    classifier = null
+    version = null
+    manifest {
+        attributes 'Description': 'Highspot coding challenge application JAR'
+    }
+}
